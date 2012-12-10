@@ -2,6 +2,11 @@
 #include "AppMacros.h"
 USING_NS_CC;
 
+#include "HttpRequest.h"
+#include "HttpResponse.h"
+#include "HttpClient.h"
+USING_NS_CC_EXT;
+
 
 CCScene* HelloWorld::scene()
 {
@@ -76,9 +81,62 @@ bool HelloWorld::init()
     // add the sprite as a child to this layer
     this->addChild(pSprite, 0);
     
+    {
+        CCHttpRequest* request = new CCHttpRequest();
+        request->setUrl("http://192.168.30.223:8080/gangster/Hellserv");
+        request->setRequestType(CCHttpRequest::kHttpPost);
+        request->setResponseCallback(this, callfuncND_selector(HelloWorld::onHttpRequestCompleted));
+        
+        // write the post data
+        const char* postData = "cmd=fight&type=1";
+        request->setRequestData(postData, strlen(postData));
+        
+        request->setTag("POST test1");
+        CCHttpClient::getInstance()->send(request);
+        request->release();
+    }
+    
     return true;
 }
 
+void HelloWorld::onHttpRequestCompleted(cocos2d::CCNode *sender, void *data)
+{
+    CCHttpResponse *response = (CCHttpResponse*)data;
+    
+    if (!response)
+    {
+        return;
+    }
+    
+    // You can get original request type from: response->request->reqType
+    if (0 != strlen(response->getHttpRequest()->getTag()))
+    {
+        CCLog("%s completed", response->getHttpRequest()->getTag());
+    }
+    
+    int statusCode = response->getResponseCode();
+    char statusString[64] = {};
+    sprintf(statusString, "HTTP Status Code: %d, tag = %s", statusCode, response->getHttpRequest()->getTag());
+    //m_labelStatusCode->setString(statusString);
+    CCLog("status = %s", statusString);
+    CCLog("response code: %d", statusCode);
+    
+    if (!response->isSucceed())
+    {
+        CCLog("response failed");
+        CCLog("error buffer: %s", response->getErrorBuffer());
+        return;
+    }
+    
+    // dump data
+    std::vector<char> *buffer = response->getResponseData();
+    printf("Http Test, dump data: ");
+    for (unsigned int i = 0; i < buffer->size(); i++)
+    {
+        printf("%c", (*buffer)[i]);
+    }
+    printf("\n");
+}
 
 void HelloWorld::menuCloseCallback(CCObject* pSender)
 {

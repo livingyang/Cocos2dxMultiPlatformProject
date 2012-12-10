@@ -17,6 +17,8 @@ public:
     
     // implement the "static node()" method manually
     CREATE_FUNC(HelloWorld);
+    
+    void onHttpRequestCompleted(cocos2d::CCNode *sender, void *data);
 };
 
 #endif // __HELLOWORLD_SCENE_H__
